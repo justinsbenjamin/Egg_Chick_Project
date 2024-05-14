@@ -30,26 +30,63 @@ library(ggplot2)
 library(lme4)
 library(glmmTMB)
 library(performance)
+library(tidyr)
+library(dplyr)
 
-data <- read.csv("All_data_May_2.csv")
+data <- read.csv("All_data_May_14.csv")
 View(data)
 
-Nest_ID <- data$Nest_ID
-Egg_ID <- data$Egg_ID
-Length <- data$Length
-Width <- data$Width
-Shield_tip <- data$Shield.to.Tip
-Tarsus <- data$Tarsus
-Mass <- data$Mass
-Hatch_order <- data$Hatch_order
+long_data <- pivot_longer(data, 
+                          cols = c("Shield.to.Tip", "Tarsus", "Mass"),
+                          names_to = "Measurement",     
+                          values_to = "Value")  %>% 
+                          mutate(long_data,
+                          Measurement = ifelse(Measurement == "Shield.to.Tip", 
+                                               "Shield_tip", Measurement))
+
+Year <- long_data$Year
+Nest_ID <- long_data$Nest_ID
+Egg_ID <- long_data$Egg_ID
+Length <- long_data$Length
+Width <- long_data$Width
+Hatch_order <- long_data$Hatch_order
+Mass <- long_data$
+  
+
+# Models looking at the effects of hatching orders, egg sizes, and their interactions
+# on the mass, length of tarsus, and length of shield-tip of chicks. 
+# The female, 1st or 2nd clutch of the season, climate data could also maybe be 
+# added to these models as well. 
+
+# Mass_model <- glmmTMB(Value ~ Hatch_order + Egg_size + Hatch_order*Egg_size + 
+                     # (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Mass"))
+
+# Tarsus_model <- glmmTMB(Value ~ Hatch_order + Egg_size + Hatch_order*Egg_size + 
+                        #(1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Tarsus"))
+
+# Shield_tip_model <- glmmTMB(Value ~ Hatch_order + Egg_size + Hatch_order*Egg_size + 
+                      #  (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Shield_tip"))
+
+
+
+# Model looking at the effects of females and laying order on the size of eggs. 
+# It's missing a lot of the data since we find most nests with eggs so not too sure
+# how to proceed. Might be interesting to add some climate data for the yearly variation, 
+# and maybe add whether it's the first or second clutch of the season to the model. 
+
+#Egg_size_model <- glmmTMB(Egg size ~ Laying_order + female + laying_order*female + (1|Year/Nest ID)
 
 
 
 
+# Model exploring any pattern between laying order, female, and egg size on the 
+# hatching order. Earlier laid eggs will obviously hatch earlier if there is 
+# no delayed incubation, but maybe larger eggs are better at "catching up" 
+# with development to hatch more synchronously?
 
-
-
-
+# Hatch_order_model <- glmmTMB(Hatch_order ~ Laying_order + female + Egg_size + 
+                            # Laying_order*female + Laying_order*Egg_size +
+                            # female*Egg_size + (1|Year/Nest ID)
 
 
 
