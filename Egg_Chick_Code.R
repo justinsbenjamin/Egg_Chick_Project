@@ -1,7 +1,7 @@
-###########
+############
 # Egg and Chick Project
 # Justin Benjamin 
-###########
+############
 
 # Here is a project I am working on to explore if there are any patterns or 
 # relationships between the size of Pūkeko (Porphyrio melanotus melanotus) eggs 
@@ -25,6 +25,11 @@
 # Most of my analyses will be using this complete data set with known egg size, 
 # hatching order, and chick morphometric measurements at hatching.
 
+# Hypothesis: Females vary their pre-hatching reproductive investment based on dominance 
+# status and laying order to increase their reproductive success. 
+
+# Predictions: Earlier laid eggs are larger than later laid eggs
+
 
 library(ggplot2)
 library(lme4)
@@ -43,15 +48,45 @@ long_data <- pivot_longer(data,
                           mutate(long_data,
                           Measurement = ifelse(Measurement == "Shield.to.Tip", 
                                                "Shield_tip", Measurement))
-
+View(long_data)
 Year <- long_data$Year
 Nest_ID <- long_data$Nest_ID
 Egg_ID <- long_data$Egg_ID
 Length <- long_data$Length
 Width <- long_data$Width
 Hatch_order <- long_data$Hatch_order
-Mass <- long_data$
-  
+Measurement <- long_data$Measurement
+Value <- long_data$Value
+
+
+hatch_order_plot <- ggplot(long_data %>% filter(Measurement == "Mass"), aes(x = Hatch_order, Value)) +
+  geom_point() +
+  theme_classic()
+plot(hatch_order_plot)
+
+
+
+
+
+
+egg_data <- read.csv("Eggs_May_15.csv") 
+View(egg_data)
+
+Egg_length <- egg_data$Length
+Egg_width <- egg_data$Width
+
+summary(Egg_length)
+summary(Egg_width)
+
+# This has some duck eggs etc that may be skewing the data.
+egg_length_plot <- ggplot(egg_data, aes(x = Egg_width, y = Egg_length)) +
+                   geom_point() +
+                   theme_classic()
+plot(egg_length_plot)
+
+
+
+# Prediction 1: Earlier hatching eggs and larger eggs will hatch larger chicks.
 
 # Models looking at the effects of hatching orders, egg sizes, and their interactions
 # on the mass, length of tarsus, and length of shield-tip of chicks. 
@@ -69,15 +104,23 @@ Mass <- long_data$
 
 
 
+
+
+
+#### Prediction 2: Earlier laid eggs are larger than later laid eggs. 
+
 # Model looking at the effects of females and laying order on the size of eggs. 
 # It's missing a lot of the data since we find most nests with eggs so not too sure
 # how to proceed. Might be interesting to add some climate data for the yearly variation, 
-# and maybe add whether it's the first or second clutch of the season to the model. 
+# and maybe add first or second clutch of the season to the model. 
 
 #Egg_size_model <- glmmTMB(Egg size ~ Laying_order + female + laying_order*female + (1|Year/Nest ID)
 
 
 
+
+
+#### Prediction 3: Larger later-laid eggs will hatch earlier than smaller later-laid eggs
 
 # Model exploring any pattern between laying order, female, and egg size on the 
 # hatching order. Earlier laid eggs will obviously hatch earlier if there is 
@@ -88,6 +131,13 @@ Mass <- long_data$
                             # Laying_order*female + Laying_order*Egg_size +
                             # female*Egg_size + (1|Year/Nest ID)
 
+
+
+
+# Prediction 4: Dominant females lay larger eggs than subordinate females.
+
+# Perhaps even just the dominance status could alter the size of the eggs. This 
+# prediction is related to earlier eggs are larger. 
 
 
 
