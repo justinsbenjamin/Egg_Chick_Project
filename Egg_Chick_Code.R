@@ -37,16 +37,20 @@ library(performance)
 library(tidyr)
 library(dplyr)
 
-data <- read.csv("All_data_May_14.csv")
+data <- read.csv("Egg_chick_data_May_22.csv")
 View(data)
+
+Width <- data$Width
+Length <- data$Length
+
+data <- data %>% 
+        mutate(Volume = (0.525*Length*(Width^2)/1000))
 
 long_data <- pivot_longer(data, 
                           cols = c("Shield.to.Tip", "Tarsus", "Mass"),
                           names_to = "Measurement",     
-                          values_to = "Value")  %>% 
-                          mutate(long_data,
-                          Measurement = ifelse(Measurement == "Shield.to.Tip", 
-                                               "Shield_tip", Measurement))
+                          values_to = "Value")
+
 View(long_data)
 Year <- long_data$Year
 Nest_ID <- long_data$Nest_ID
@@ -72,41 +76,24 @@ plot(Length_mass_plot)
 
 
 
-
-egg_data <- read.csv("Eggs_May_15.csv") 
-View(egg_data)
-
-Egg_length <- egg_data$Length
-Egg_width <- egg_data$Width
-
-summary(Egg_length)
-summary(Egg_width)
-
-# This has some duck eggs etc that may be skewing the data.
-egg_length_plot <- ggplot(egg_data, aes(x = Egg_width, y = Egg_length)) +
-                   geom_point() +
-                   theme_classic()
-plot(egg_length_plot)
-
-
-
 # Prediction 1: Earlier hatching eggs and larger eggs will hatch larger chicks.
 
-# Models looking at the effects of hatching orders, egg sizes, and their interactions
-# on the mass, length of tarsus, and length of shield-tip of chicks. 
 # The female, 1st or 2nd clutch of the season, climate data could also maybe be 
 # added to these models as well. 
 # 30 days before laying*
 # egg sizes may not be independent between years**
 
-# Mass_model <- glmmTMB(Value ~ Hatch_order + Egg_size + Hatch_order*Egg_size + 
-                     # (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Mass"))
+Mass_model <- glmmTMB(Value ~ Hatch_order*Volume + 
+                     (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Mass"))
+check_model(Mass_model)
 
-# Tarsus_model <- glmmTMB(Value ~ Hatch_order + Egg_size + Hatch_order*Egg_size + 
-                        #(1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Tarsus"))
+Tarsus_model <- glmmTMB(Value ~ Hatch_order*Volume + 
+                       (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Tarsus"))
+check_model(Tarsus_model)
 
-# Shield_tip_model <- glmmTMB(Value ~ Hatch_order + Egg_size + Hatch_order*Egg_size + 
-                      #  (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Shield_tip"))
+Shield_tip_model <- glmmTMB(Value ~ Hatch_order*Volume + 
+                           (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Shield.to.Tip"))
+check_model(Shield_tip_model)
 
 
 
