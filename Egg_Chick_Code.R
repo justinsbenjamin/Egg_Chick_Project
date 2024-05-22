@@ -26,9 +26,8 @@
 # hatching order, and chick morphometric measurements at hatching.
 
 # Hypothesis: Females vary their pre-hatching reproductive investment based on dominance 
-# status and laying order to increase their reproductive success. 
-
-# Predictions: Earlier laid eggs are larger than later laid eggs
+# status and laying order to increase their reproductive success.
+# reword laying order relative to the female in the clutch
 
 
 library(ggplot2)
@@ -64,7 +63,12 @@ hatch_order_plot <- ggplot(long_data %>% filter(Measurement == "Mass"), aes(x = 
   theme_classic()
 plot(hatch_order_plot)
 
-
+Length_mass_plot <- ggplot(long_data %>% filter(Measurement == "Mass"), aes(x = Length, Value)) +
+  geom_point() +
+  theme_classic() +
+  scale_y_continuous(ylim = c(0, 50)) +
+  geom_abline()
+plot(Length_mass_plot)
 
 
 
@@ -92,6 +96,8 @@ plot(egg_length_plot)
 # on the mass, length of tarsus, and length of shield-tip of chicks. 
 # The female, 1st or 2nd clutch of the season, climate data could also maybe be 
 # added to these models as well. 
+# 30 days before laying*
+# egg sizes may not be independent between years**
 
 # Mass_model <- glmmTMB(Value ~ Hatch_order + Egg_size + Hatch_order*Egg_size + 
                      # (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Mass"))
@@ -132,7 +138,9 @@ plot(egg_length_plot)
                             # female*Egg_size + (1|Year/Nest ID)
 
 
-
+# To what extent does an individual female dictate the size of the eggs
+# variation within females
+# Egg pattern most abundant in the nest relative to egg size
 
 # Prediction 4: Dominant females lay larger eggs than subordinate females.
 
