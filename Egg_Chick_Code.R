@@ -62,17 +62,11 @@ Measurement <- long_data$Measurement
 Value <- long_data$Value
 
 
-hatch_order_plot <- ggplot(long_data %>% filter(Measurement == "Mass"), aes(x = Hatch_order, Value)) +
-  geom_point() +
-  theme_classic()
-plot(hatch_order_plot)
-
-Length_mass_plot <- ggplot(long_data %>% filter(Measurement == "Mass"), aes(x = Length, Value)) +
+Volume_mass_plot <- ggplot(long_data %>% filter(Measurement == "Mass"), aes(x = Volume, Value)) +
   geom_point() +
   theme_classic() +
-  scale_y_continuous(ylim = c(0, 50)) +
   geom_abline()
-plot(Length_mass_plot)
+plot(Volume_mass_plot)
 
 
 
