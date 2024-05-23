@@ -25,10 +25,9 @@
 # Most of my analyses will be using this complete data set with known egg size, 
 # hatching order, and chick morphometric measurements at hatching.
 
-# Hypothesis: Females vary their pre-hatching reproductive investment based on dominance 
-# status and laying order to increase their reproductive success.
-# reword laying order relative to the female in the clutch
-
+# Hypothesis: Females vary their pre-hatching reproductive investment based on their 
+# dominance status and laying order relative to the other female in the clutch to 
+# increase their reproductive success.
 
 library(ggplot2)
 library(lme4)
@@ -45,37 +44,60 @@ Length <- data$Length
 
 data <- data %>% 
         mutate(Volume = (0.525*Length*(Width^2)/1000))
+# Volume calculation is from Narushin (2005) but we could change the volume 
+# formula if necessary. 
 
 long_data <- pivot_longer(data, 
                           cols = c("Shield.to.Tip", "Tarsus", "Mass"),
                           names_to = "Measurement",     
                           values_to = "Value")
-
 View(long_data)
+
 Year <- long_data$Year
 Nest_ID <- long_data$Nest_ID
 Egg_ID <- long_data$Egg_ID
-Length <- long_data$Length
-Width <- long_data$Width
 Hatch_order <- long_data$Hatch_order
 Measurement <- long_data$Measurement
 Value <- long_data$Value
 
 
-Volume_mass_plot <- ggplot(long_data %>% filter(Measurement == "Mass"), aes(x = Volume, Value)) +
-  geom_point() +
-  theme_classic() +
-  geom_abline()
-plot(Volume_mass_plot)
+# Function to plot morphometric measurements to different predictor variables and 
+# print the correlation test. Here I am making plots with egg volume and hatch order
+# but other predictor variables could be added later. 
+
+plot_and_correlate <- function(Data, measurement, predictor) {
+  filtered_data <- Data %>%
+    filter(Measurement == measurement) %>%
+    filter(!is.na(Volume) & !is.na(Value) & !is.na(Hatch_order))
+  
+  plot <- ggplot(filtered_data, aes(x = !!sym(predictor), y = Value)) +
+    geom_point() +
+    theme_classic() +
+    ylab(measurement) +
+    geom_smooth(method = "lm", se = FALSE)
+  print(plot)
+  
+  cor_test_result <- cor.test(filtered_data[[predictor]], filtered_data$Value)
+  return(cor_test_result)
+}
+
+# Prediction 1: Larger eggs will hatch larger chicks.
+plot_and_correlate(long_data, "Mass", "Volume")
+plot_and_correlate(long_data, "Tarsus", "Volume")
+plot_and_correlate(long_data, "Shield.to.Tip", "Volume")
+
+# Prediction 2: Earlier hatched eggs will hatch larger chicks.
+plot_and_correlate(long_data, "Mass", "Hatch_order")
+plot_and_correlate(long_data, "Tarsus", "Hatch_order")
+plot_and_correlate(long_data, "Shield.to.Tip", "Hatch_order")
 
 
-
-# Prediction 1: Earlier hatching eggs and larger eggs will hatch larger chicks.
-
-# The female, 1st or 2nd clutch of the season, climate data could also maybe be 
-# added to these models as well. 
-# 30 days before laying*
-# egg sizes may not be independent between years**
+# Prediction 3: There's an interaction between hatch order and egg volume on the 
+# size of the chick. # The female (A, B, or C), 1st or 2nd clutch of the season, climate data such as 
+# mean temperature and precipitation in the 30 days before laying could also be 
+# added to these models. A challenge I'll face is that egg sizes may not be 
+# independent between years as some of these data from different years may be from
+# the same female. 
 
 Mass_model <- glmmTMB(Value ~ Hatch_order*Volume + 
                      (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Mass"))
@@ -94,11 +116,12 @@ check_model(Shield_tip_model)
 
 
 
-#### Prediction 2: Earlier laid eggs are larger than later laid eggs. 
+#### Prediction 4: Earlier laid eggs are larger than later laid eggs. 
 
 # Model looking at the effects of females and laying order on the size of eggs. 
 # It's missing a lot of the data since we find most nests with eggs so not too sure
-# how to proceed. Might be interesting to add some climate data for the yearly variation, 
+# how to proceed. This can come from a different dataset that doesn't include 
+# chick data. Might be interesting to add some climate data for the yearly variation, 
 # and maybe add first or second clutch of the season to the model. 
 
 #Egg_size_model <- glmmTMB(Egg size ~ Laying_order + female + laying_order*female + (1|Year/Nest ID)
@@ -107,7 +130,7 @@ check_model(Shield_tip_model)
 
 
 
-#### Prediction 3: Larger later-laid eggs will hatch earlier than smaller later-laid eggs
+#### Prediction 5: Larger later-laid eggs will hatch earlier than smaller later-laid eggs
 
 # Model exploring any pattern between laying order, female, and egg size on the 
 # hatching order. Earlier laid eggs will obviously hatch earlier if there is 
