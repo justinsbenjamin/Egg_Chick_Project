@@ -25,9 +25,9 @@
 # Most of my analyses will be using this complete data set with known egg size, 
 # hatching order, and chick morphometric measurements at hatching.
 
-# Hypothesis: Females vary their pre-hatching reproductive investment based on their 
-# dominance status and laying order relative to the other female in the clutch to 
-# increase their reproductive success.
+# Hypothesis: We hypothesize that females vary their pre-hatching reproductive 
+# investment based on their dominance status and laying order relative to other 
+# females in the clutch to increase their reproductive success. 
 
 library(ggplot2)
 library(lme4)
