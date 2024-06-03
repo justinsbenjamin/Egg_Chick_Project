@@ -30,6 +30,7 @@
 # females in the clutch to increase their reproductive success. 
 
 library(ggplot2)
+theme_set(theme_classic()) ## BMB: best to set theme once, up front
 library(lme4)
 library(glmmTMB)
 library(performance)
@@ -37,39 +38,47 @@ library(tidyr)
 library(dplyr)
 library(patchwork)
 library(ggpubr)
-
+library(bbmle)
 ## BMB: once you are working in a version control system you should
 ##  **not** have different, dated versions of data files ...
 
 ## BMB: don't use built-in names such as 'data' for variable names.
 ##  Mostly harmless but occasionally causes very confusing error messages.
 data <- read.csv("Egg_chick_data_May_22.csv")
-View(data)
 
-## BMB: why do this? it's almost always best practice to keep variables
+## BMB: it is better practice *not* to put code into .R files that
+##  only makes sense in an interactive session
+##  (you could do something like this, though:)
+if (interactive()) View(data)
+
+## BMB: why pull variables out like this? it's almost always best practice to keep variables
 ##  inside a data frame, so they stay consistent e.g. if you filter the data
 ##  set.
 
-Width <- data$Width
-Length <- data$Length
+## Width <- data$Width
+## Length <- data$Length
 
-data <- data %>% 
-        mutate(Volume = (0.525*Length*(Width^2)/1000))
 # Volume calculation is from Narushin (2005) but we could change the volume 
 # formula if necessary. 
+calc_volume <- function(len, wid) {
+    0.525*len*wid^2/1000
+}
+
+data <- data %>% 
+        mutate(Volume = calc_volume(Length,Width))
 
 long_data <- pivot_longer(data, 
                           cols = c("Shield.to.Tip", "Tarsus", "Mass"),
                           names_to = "Measurement",     
                           values_to = "Value")
-View(long_data)
+## View(long_data)
 
-Year <- long_data$Year
-Nest_ID <- long_data$Nest_ID
-Egg_ID <- long_data$Egg_ID
-Hatch_order <- long_data$Hatch_order
-Measurement <- long_data$Measurement
-Value <- long_data$Value
+## Year <- long_data$Year
+## Nest_ID <- long_data$Nest_ID
+## Egg_ID <- long_data$Egg_ID
+## Hatch_order <- long_data$Hatch_order
+## Measurement <- long_data$Measurement
+## Value <- long_data$Value
 
 
 # Function to plot morphometric measurements to different predictor variables and 
@@ -118,6 +127,12 @@ plot_and_correlate(long_data, "Tarsus", "Hatch_order")
 plot_and_correlate(long_data, "Shield.to.Tip", "Hatch_order")
 
 
+ggplot(long_data, aes(Hatch_order, Value)) +
+    stat_sum(alpha=0.5) +
+    geom_smooth(method = "lm") +
+    ggpubr::stat_cor() +
+    facet_wrap(~Measurement, scale = "free")
+
 # Prediction 3: There's an interaction between hatch order and egg volume on the 
 # size of the chick. # The female (A, B, or C), 1st or 2nd clutch of the season, climate data such as 
 # mean temperature and precipitation in the 30 days before laying could also be 
@@ -125,6 +140,8 @@ plot_and_correlate(long_data, "Shield.to.Tip", "Hatch_order")
 # independent between years as some of these data from different years may be from
 # the same female. 
 
+## BMB: rather than filtering the long data to (Measurement == "Mass"), maybe use the
+## wide data for this?
 Mass_model <- glmmTMB(Value ~ Hatch_order*Volume + 
                      (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Mass"))
 check_model(Mass_model)
@@ -137,11 +154,12 @@ Shield_tip_model <- glmmTMB(Value ~ Hatch_order*Volume +
                            (1|Year/Nest_ID), data = long_data %>% filter(Measurement == "Shield.to.Tip"))
 check_model(Shield_tip_model)
 
+## BMB: experimenting with multivariate models
+multivariate_model <- glmmTMB(Value ~ 0 + Measurement + Measurement:(Hatch_order*Volume) + 
+                           rr(Measurement|Nest_ID:Year, d=1), data = long_data)
 
-
-
-
-
+mm2 <- update(multivariate_model, . ~ . + rr(Measurement|Year, d=1), data = long_data)
+AICtab(multivariate_model, mm2)
 #### Prediction 4: Earlier laid eggs are larger than later laid eggs. 
 
 # Model looking at the effects of females and laying order on the size of eggs. 
