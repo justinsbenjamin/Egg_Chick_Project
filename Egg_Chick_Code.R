@@ -35,9 +35,20 @@ library(glmmTMB)
 library(performance)
 library(tidyr)
 library(dplyr)
+library(patchwork)
+library(ggpubr)
 
+## BMB: once you are working in a version control system you should
+##  **not** have different, dated versions of data files ...
+
+## BMB: don't use built-in names such as 'data' for variable names.
+##  Mostly harmless but occasionally causes very confusing error messages.
 data <- read.csv("Egg_chick_data_May_22.csv")
 View(data)
+
+## BMB: why do this? it's almost always best practice to keep variables
+##  inside a data frame, so they stay consistent e.g. if you filter the data
+##  set.
 
 Width <- data$Width
 Length <- data$Length
@@ -71,20 +82,35 @@ plot_and_correlate <- function(Data, measurement, predictor) {
     filter(!is.na(Volume) & !is.na(Value) & !is.na(Hatch_order))
   
   plot <- ggplot(filtered_data, aes(x = !!sym(predictor), y = Value)) +
-    geom_point() +
-    theme_classic() +
-    ylab(measurement) +
-    geom_smooth(method = "lm", se = FALSE)
-  print(plot)
+      geom_point() +
+      theme_classic() +
+      ylab(measurement) +
+      geom_smooth(method = "lm") +
+      ggpubr::stat_cor()
   
-  cor_test_result <- cor.test(filtered_data[[predictor]], filtered_data$Value)
-  return(cor_test_result)
+  ## cor_test_result <- cor.test(filtered_data[[predictor]], filtered_data$Value)
+  ## return(cor_test_result)
+  return(plot)
 }
 
+## BMB: how about
+pairs(~Mass+Tarsus+Shield.to.Tip + Volume, data = data, gap = 0)
+car::scatterplotMatrix(~Mass+Tarsus+Shield.to.Tip + Volume, data = data, gap = 0)
+
+
 # Prediction 1: Larger eggs will hatch larger chicks.
-plot_and_correlate(long_data, "Mass", "Volume")
-plot_and_correlate(long_data, "Tarsus", "Volume")
-plot_and_correlate(long_data, "Shield.to.Tip", "Volume")
+p1 <- plot_and_correlate(long_data, "Mass", "Volume")
+p2 <- plot_and_correlate(long_data, "Tarsus", "Volume")
+p3 <- plot_and_correlate(long_data, "Shield.to.Tip", "Volume")
+p1 + p2 + p3
+
+## or even
+ggplot(long_data, aes(Volume, Value)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    ggpubr::stat_cor() +
+    facet_wrap(~Measurement, scale = "free")
+
 
 # Prediction 2: Earlier hatched eggs will hatch larger chicks.
 plot_and_correlate(long_data, "Mass", "Hatch_order")
